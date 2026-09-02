@@ -1,0 +1,295 @@
+@import 'tailwindcss';
+
+/* Mörkt läge styrs av en klass på <html>, satt före första målningen i index.html. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------------------------------------------------------------------------
+   Typsnitt — self-hostat. Appen gör inga externa anrop, varken av
+   integritetsskäl eller driftskäl: den ska fungera helt offline.
+--------------------------------------------------------------------------- */
+@font-face {
+  font-family: 'Figtree';
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url('/fonts/figtree-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
+    U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Figtree';
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url('/fonts/figtree-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308,
+    U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113,
+    U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* ---------------------------------------------------------------------------
+   Paletten. Varje färg som bär text är kontrastprövad mot sin bakgrund
+   (WCAG 2.2 AA, 4.5:1 för brödtext). Därför är den interaktiva grönan
+   mörkare än den dekorativa — samma familj, olika uppdrag.
+--------------------------------------------------------------------------- */
+:root {
+  --c-canvas: #fbf8f4;
+  --c-canvas-soft: #f3eee6;
+  --c-surface: #ffffff;
+  --c-surface-2: #faf7f2;
+  --c-ink: #2a2a2e;
+  --c-ink-soft: #5c5c66;
+  --c-ink-faint: #78787f;
+  --c-line: #e8e1d7;
+  --c-line-strong: #d8cec0;
+
+  --c-primary: #2f7d6f;
+  --c-primary-hover: #266a5e;
+  --c-primary-soft: #e4f0ed;
+  --c-primary-ink: #205c51;
+  --c-primary-vivid: #4e9b8f;
+  --c-on-primary: #ffffff;
+
+  --c-accent: #f2a25c;
+  --c-accent-soft: #fcefe1;
+  --c-accent-ink: #8a4e14;
+
+  --c-calm: #7c6bb0;
+  --c-calm-soft: #efebf9;
+  --c-calm-ink: #574787;
+
+  --c-rose: #c2566b;
+  --c-rose-soft: #fbe9ec;
+  --c-rose-ink: #93374a;
+
+  --c-crisis: #a8483c;
+  --c-crisis-soft: #fbece8;
+  --c-crisis-ink: #8a3529;
+  --c-on-crisis: #ffffff;
+
+  --c-focus: #2f7d6f;
+
+  --sh-soft: 0 1px 2px rgb(42 42 46 / 0.04), 0 8px 24px -10px rgb(42 42 46 / 0.12);
+  --sh-lift: 0 2px 6px rgb(42 42 46 / 0.05), 0 18px 44px -16px rgb(42 42 46 / 0.2);
+  --sh-inset: inset 0 1px 2px rgb(42 42 46 / 0.05);
+}
+
+.dark {
+  --c-canvas: #16171c;
+  --c-canvas-soft: #101116;
+  --c-surface: #1e2027;
+  --c-surface-2: #262932;
+  --c-ink: #eceae5;
+  --c-ink-soft: #a8a6a0;
+  --c-ink-faint: #85847f;
+  --c-line: #2e313a;
+  --c-line-strong: #3d414c;
+
+  --c-primary: #6fb5a8;
+  --c-primary-hover: #82c4b7;
+  --c-primary-soft: #1b302c;
+  --c-primary-ink: #9fd4c9;
+  --c-primary-vivid: #6fb5a8;
+  --c-on-primary: #0e1e1b;
+
+  --c-accent: #e5975a;
+  --c-accent-soft: #33261a;
+  --c-accent-ink: #f0b581;
+
+  --c-calm: #a092c9;
+  --c-calm-soft: #241f33;
+  --c-calm-ink: #bdb2e0;
+
+  --c-rose: #d4808f;
+  --c-rose-soft: #331d22;
+  --c-rose-ink: #e3a3ae;
+
+  --c-crisis: #e08d80;
+  --c-crisis-soft: #2f1a16;
+  --c-crisis-ink: #eeaea3;
+  --c-on-crisis: #2a0f0b;
+
+  --c-focus: #6fb5a8;
+
+  --sh-soft: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px -10px rgb(0 0 0 / 0.5);
+  --sh-lift: 0 2px 6px rgb(0 0 0 / 0.35), 0 18px 44px -16px rgb(0 0 0 / 0.6);
+  --sh-inset: inset 0 1px 2px rgb(0 0 0 / 0.3);
+}
+
+/* `inline` gör att utilities får var(--c-*) direkt, så färgerna byts
+   när .dark slås på utan att någon klass behöver ändras. */
+@theme inline {
+  --font-sans: 'Figtree', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --color-canvas: var(--c-canvas);
+  --color-canvas-soft: var(--c-canvas-soft);
+  --color-surface: var(--c-surface);
+  --color-surface-2: var(--c-surface-2);
+  --color-ink: var(--c-ink);
+  --color-ink-soft: var(--c-ink-soft);
+  --color-ink-faint: var(--c-ink-faint);
+  --color-line: var(--c-line);
+  --color-line-strong: var(--c-line-strong);
+
+  --color-primary: var(--c-primary);
+  --color-primary-hover: var(--c-primary-hover);
+  --color-primary-soft: var(--c-primary-soft);
+  --color-primary-ink: var(--c-primary-ink);
+  --color-primary-vivid: var(--c-primary-vivid);
+  --color-on-primary: var(--c-on-primary);
+
+  --color-accent: var(--c-accent);
+  --color-accent-soft: var(--c-accent-soft);
+  --color-accent-ink: var(--c-accent-ink);
+
+  --color-calm: var(--c-calm);
+  --color-calm-soft: var(--c-calm-soft);
+  --color-calm-ink: var(--c-calm-ink);
+
+  --color-rose: var(--c-rose);
+  --color-rose-soft: var(--c-rose-soft);
+  --color-rose-ink: var(--c-rose-ink);
+
+  --color-crisis: var(--c-crisis);
+  --color-crisis-soft: var(--c-crisis-soft);
+  --color-crisis-ink: var(--c-crisis-ink);
+  --color-on-crisis: var(--c-on-crisis);
+
+  --radius-lg: 1.125rem;
+  --radius-xl: 1.375rem;
+  --radius-2xl: 1.75rem;
+  --radius-3xl: 2.25rem;
+
+  --shadow-soft: var(--sh-soft);
+  --shadow-lift: var(--sh-lift);
+
+  --ease-calm: cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  --animate-breathe: breathe 8s var(--ease-calm) infinite;
+  --animate-drift: drift 26s ease-in-out infinite;
+  --animate-rise: rise 0.5s var(--ease-calm) both;
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.75;
+  }
+  50% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+}
+@keyframes drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  33% {
+    transform: translate3d(2%, -3%, 0) scale(1.05);
+  }
+  66% {
+    transform: translate3d(-2%, 2%, 0) scale(0.97);
+  }
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Bas
+--------------------------------------------------------------------------- */
+@layer base {
+  * {
+    border-color: var(--c-line);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--c-canvas);
+    color: var(--c-ink);
+    font-family: var(--font-sans);
+    font-synthesis-weight: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.6;
+    overscroll-behavior-y: none;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    line-height: 1.2;
+    letter-spacing: -0.018em;
+    font-weight: 700;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Synlig, mjuk fokusring överallt — tangentbordet ska aldrig tappa bort sig. */
+  :focus-visible {
+    outline: 2px solid var(--c-focus);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+
+  ::selection {
+    background: var(--c-primary-soft);
+    color: var(--c-primary-ink);
+  }
+
+  input,
+  textarea,
+  select,
+  button {
+    font: inherit;
+    color: inherit;
+  }
+
+  /* Respektera användarens val. All rörelse i appen är dekorativ. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* Hoppa-till-innehåll: syns bara vid tangentbordsfokus. */
+  .skip-link {
+    position: absolute;
+    left: 50%;
+    top: -100px;
+    transform: translateX(-50%);
+    z-index: 100;
+    padding: 0.75rem 1.25rem;
+    border-radius: 999px;
+    background: var(--c-primary);
+    color: var(--c-on-primary);
+    transition: top 0.2s var(--ease-calm);
+  }
+  .skip-link:focus {
+    top: 0.75rem;
+  }
+}

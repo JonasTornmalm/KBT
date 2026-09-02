@@ -361,3 +361,12 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+# --- Webbappen ---
+dist/
+dev-dist/
+coverage/
+*.tsbuildinfo
+.vite/
+
+# Användarens egen säkerhetskopia ska aldrig hamna i arkivet av misstag.
+*.kbt.json

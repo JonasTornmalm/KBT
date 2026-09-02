@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="sv">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <meta
+      name="description"
+      content="Ett fritt och privat verktyg för kognitiv beteendeterapi på svenska. All din data stannar krypterad på din egen enhet."
+    />
+    <meta name="theme-color" content="#FBF8F4" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#16171C" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="apple-touch-icon" href="./icon-192.png" />
+    <title>KBT – ditt eget arbetsrum</title>
+    <script>
+      // Sätt temat innan första målningen så att sidan aldrig blinkar vitt.
+      try {
+        var t = localStorage.getItem('kbt.theme')
+        if (t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark')
+        }
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>
+      Den här appen behöver JavaScript för att fungera. Allt körs lokalt i din webbläsare – inget
+      skickas till någon server.
+    </noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
