@@ -112,6 +112,29 @@ export class SecureStore {
     return db.records.where('type').equals(type).count()
   }
 
+  /**
+   * Tidsstämpeln för den senaste posten av varje typ.
+   *
+   * Läser bara nycklarna ur det sammansatta indexet, så ingenting dekrypteras
+   * och ingen ciphertext lämnar databasen. Det räcker för att svara på frågan
+   * "har det här verktyget använts sedan i tisdags?", vilket är precis vad
+   * hemuppgifterna behöver veta.
+   */
+  async latestByType(): Promise<Partial<Record<RecordType, string>>> {
+    // Dexie beskriver indexnycklar som en lös union; det här indexet är alltid
+    // paret [typ, tid], och det vet bara schemat i db.ts.
+    const keys = (await db.records.orderBy('[type+createdAt]').keys()) as unknown as Array<
+      [RecordType, string]
+    >
+
+    // Nycklarna kommer sorterade på [typ, tid], så den sista per typ vinner.
+    const latest: Partial<Record<RecordType, string>> = {}
+    for (const [type, createdAt] of keys) {
+      latest[type] = createdAt
+    }
+    return latest
+  }
+
   /** Poster det bara finns en av; skapas med `fallback` första gången. */
   async singleton<T>(type: SingletonType, fallback: () => T): Promise<Entry<T>> {
     const existing = await this.get<T>(type)

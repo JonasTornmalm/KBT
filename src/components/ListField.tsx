@@ -127,7 +127,7 @@ export function ListField({
             onKeyDown={onKeyDown}
             placeholder={placeholder}
             aria-label={label}
-            className="min-h-[3rem] w-full rounded-xl border border-line bg-surface px-4 text-ink placeholder:text-ink-faint transition-colors focus:border-primary focus:outline-none"
+            className="min-h-[3rem] w-full rounded-xl border border-line bg-surface px-4 text-ink placeholder:text-ink-faint transition-colors focus:border-primary"
           />
           <button
             type="button"

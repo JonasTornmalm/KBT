@@ -4,6 +4,7 @@ import { Button } from '../../components/Button'
 import { Card, Muted } from '../../components/Card'
 import { TextInput } from '../../components/Field'
 import { CheckIcon, PlusIcon, TrashIcon } from '../../components/Icons'
+import { ErrorState } from '../../components/PageState'
 import { Sheet } from '../../components/Sheet'
 import { Slider } from '../../components/Slider'
 import { ACTIVITY_SUGGESTIONS } from '../../content/library'
@@ -206,7 +207,7 @@ export function ActivityPage() {
   const from = toDayKey(weekStart)
   const to = toDayKey(addDays(weekStart, 6))
 
-  const { data, reload } = useAsync(async () => {
+  const { data, error, reload } = useAsync(async () => {
     const [week, all] = await Promise.all([
       store.byType<ActivityData>('activity', { from, to, order: 'asc' }),
       store.byType<ActivityData>('activity', { limit: 200 }),
@@ -249,6 +250,14 @@ export function ActivityPage() {
     if (!rating) return
     await store.remove(rating.id)
     reload()
+  }
+
+  if (error) {
+    return (
+      <ToolPage toolId="activity">
+        <ErrorState onRetry={reload} />
+      </ToolPage>
+    )
   }
 
   return (

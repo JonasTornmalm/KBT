@@ -168,6 +168,8 @@
   --animate-breathe: breathe 8s var(--ease-calm) infinite;
   --animate-drift: drift 26s ease-in-out infinite;
   --animate-rise: rise 0.5s var(--ease-calm) both;
+  /* Fördröjd, så att en läsning som går fort inte hinner blinka förbi. */
+  --animate-appear: appear 0.3s var(--ease-calm) 0.35s both;
 }
 
 @keyframes breathe {
@@ -191,6 +193,14 @@
   }
   66% {
     transform: translate3d(-2%, 2%, 0) scale(0.97);
+  }
+}
+@keyframes appear {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 @keyframes rise {
@@ -291,5 +301,16 @@
   }
   .skip-link:focus {
     top: 0.75rem;
+  }
+
+  /*
+   * Val byggda på dolda radio- och kryssrutor. Inputen är bortklippt för att
+   * tangentbord och skärmläsare ska få riktig semantik gratis — men då hamnar
+   * fokusringen på ett element som inte syns. Här ritas den om på etiketten,
+   * som är det man faktiskt ser.
+   */
+  .choice:has(:focus-visible) {
+    outline: 2px solid var(--c-focus);
+    outline-offset: 3px;
   }
 }

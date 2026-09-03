@@ -3,6 +3,7 @@ import { useStore } from '../../app/VaultProvider'
 import { Button } from '../../components/Button'
 import { Card, Muted } from '../../components/Card'
 import { TextArea } from '../../components/Field'
+import { ErrorState } from '../../components/PageState'
 import {
   ANXIETY_LABELS,
   ENERGY_LABELS,
@@ -26,7 +27,8 @@ function ScalePicker({
 }: {
   label: string
   hint?: string
-  value: number
+  /** Odefinierat = ingen skattning gjord än. Ingen ruta är förvald. */
+  value: number | undefined
   onChange: (value: number) => void
   labels: string[]
   colors?: string[]
@@ -73,11 +75,25 @@ function ScalePicker({
   )
 }
 
+/**
+ * Energi och ångest kan saknas när dagen bara snabbcheckats in från
+ * startsidan. Då står det ingenting, i stället för en siffra ingen skattat.
+ */
+function describeScales(checkin: CheckinData): string {
+  const parts: string[] = []
+  if (checkin.energy !== undefined) parts.push(`Energi ${checkin.energy}/5`)
+  if (checkin.anxiety !== undefined) parts.push(`Ångest ${checkin.anxiety}/5`)
+  return parts.join(' · ')
+}
+
+/** Incheckningen under ifyllnad: humöret är inte valt förrän användaren valt det. */
+type CheckinDraft = Omit<CheckinData, 'mood'> & { mood?: number }
+
 export function CheckinPage() {
   const store = useStore()
   const today = toDayKey()
 
-  const { data, reload } = useAsync(async () => {
+  const { data, error, reload } = useAsync(async () => {
     const [todays, history] = await Promise.all([
       store.byType<CheckinData>('checkin', { from: today, to: today, limit: 1 }),
       store.byType<CheckinData>('checkin', { limit: 30 }),
@@ -85,7 +101,9 @@ export function CheckinPage() {
     return { today: todays[0], history }
   }, [store, today])
 
-  const [draft, setDraft] = useState<CheckinData>({ mood: 3, energy: 3, anxiety: 3, note: '' })
+  // Utkastet börjar tomt. Ett förvalt "mittemellan" hade sparats som ett svar
+  // av den som bara ville se sidan.
+  const [draft, setDraft] = useState<CheckinDraft>({ note: '' })
   const [saved, setSaved] = useState(false)
   const [busy, setBusy] = useState(false)
 
@@ -96,16 +114,28 @@ export function CheckinPage() {
   const existing: Entry<CheckinData> | undefined = data?.today
 
   const save = async () => {
+    if (draft.mood === undefined) return
+
+    const checkin: CheckinData = { ...draft, mood: draft.mood }
+
     setBusy(true)
     try {
-      if (existing) await store.save<CheckinData>(existing.id, 'checkin', draft, existing.day)
-      else await store.create<CheckinData>('checkin', draft)
+      if (existing) await store.save<CheckinData>(existing.id, 'checkin', checkin, existing.day)
+      else await store.create<CheckinData>('checkin', checkin)
       setSaved(true)
       reload()
       window.setTimeout(() => setSaved(false), 2600)
     } finally {
       setBusy(false)
     }
+  }
+
+  if (error) {
+    return (
+      <ToolPage toolId="checkin">
+        <ErrorState onRetry={reload} />
+      </ToolPage>
+    )
   }
 
   return (
@@ -151,7 +181,7 @@ export function CheckinPage() {
         </div>
 
         <div className="mt-7 flex items-center gap-4">
-          <Button size="lg" onClick={() => void save()} disabled={busy}>
+          <Button size="lg" onClick={() => void save()} disabled={busy || draft.mood === undefined}>
             {existing ? 'Uppdatera dagen' : 'Spara incheckning'}
           </Button>
           <span aria-live="polite" className="text-sm font-medium text-primary">
@@ -181,9 +211,7 @@ export function CheckinPage() {
                         {formatRelativeDay(new Date(entry.createdAt))}
                       </span>
                       <span className="text-ink-soft">{level.label}</span>
-                      <span className="text-ink-faint">
-                        Energi {entry.data.energy}/5 · Ångest {entry.data.anxiety}/5
-                      </span>
+                      <span className="text-ink-faint">{describeScales(entry.data)}</span>
                     </p>
                     {entry.data.note ? (
                       <p className="mt-1 leading-relaxed text-ink-soft">{entry.data.note}</p>

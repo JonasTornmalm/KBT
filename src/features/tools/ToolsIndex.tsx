@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useStore } from '../../app/VaultProvider'
 import { Card, Muted } from '../../components/Card'
 import { ArrowRightIcon, LockIcon } from '../../components/Icons'
+import { ErrorState, LoadingState } from '../../components/PageState'
 import { FIRST_SESSION_SLUG, sessionByWeek } from '../../content/program'
 import { TOOLS, type ToolDef } from '../../content/tools'
 import { toolIntroducedIn, unlockedToolIds } from '../../domain/nextStep'
@@ -72,13 +73,14 @@ function ToolRow({ tool, locked }: { tool: ToolDef; locked?: number | null }) {
  */
 export function ToolsIndex() {
   const store = useStore()
-  const { data } = useAsync(
+  const { data, error, reload } = useAsync(
     () =>
       store.singleton<ProgramProgress>('programProgress', () => emptyProgress(FIRST_SESSION_SLUG)),
     [store],
   )
 
-  if (!data) return null
+  if (error) return <ErrorState onRetry={reload} />
+  if (!data) return <LoadingState />
 
   const unlocked = unlockedToolIds(data.data)
   const open = TOOLS.filter((tool) => unlocked.has(tool.id))

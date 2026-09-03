@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useStore } from '../../app/VaultProvider'
 import { Card, Muted } from '../../components/Card'
 import { BarChart, TrendChart } from '../../components/Chart'
+import { ErrorState, LoadingState } from '../../components/PageState'
 import { SCALES, SCALE_ORDER, type AssessmentKey } from '../../domain/assessments/scales'
 import { scoreAssessment, type AssessmentRecord } from '../../domain/assessments/scoring'
 import { moodLevel, type CheckinData } from '../../domain/checkin'
@@ -18,7 +19,7 @@ function round(value: number, decimals = 1): number {
 export function Insights() {
   const store = useStore()
 
-  const { data } = useAsync(async () => {
+  const { data, error, reload } = useAsync(async () => {
     const [checkins, assessments, activities, thoughts] = await Promise.all([
       store.byType<CheckinData>('checkin', { limit: 120, order: 'asc' }),
       store.byType<AssessmentRecord>('assessment', { order: 'asc' }),
@@ -28,10 +29,19 @@ export function Insights() {
     return { checkins, assessments, activities, thoughts }
   }, [store])
 
-  if (!data) return null
+  if (error) return <ErrorState onRetry={reload} />
+  if (!data) return <LoadingState />
 
   const { checkins, assessments, activities, thoughts } = data
   const recent = checkins.slice(-30)
+
+  // Bara dagar där ångesten faktiskt skattats. Snabbincheckningen på startsidan
+  // sätter humör och inget annat, och en graf över utfyllnadsvärden vore värre
+  // än ingen graf alls.
+  const ratedAnxiety = recent
+    .filter((entry) => entry.data.anxiety !== undefined)
+    .slice(-14)
+    .map((entry) => ({ entry, anxiety: entry.data.anxiety! }))
 
   // Samband mellan aktivitet och humör: dagar med minst en genomförd aktivitet
   // jämfört med dagar utan. Det är den upptäckt vecka 2 vill leda fram till.
@@ -103,20 +113,20 @@ export function Insights() {
         </Card>
       ) : null}
 
-      {recent.length >= 5 ? (
+      {ratedAnxiety.length >= 5 ? (
         <Card className="mb-4">
           <h2 className="font-bold text-ink">Ångest per dag</h2>
           <Muted className="mt-1">Lägre är lugnare.</Muted>
           <div className="mt-5">
             <BarChart
-              bars={recent.slice(-14).map((entry) => ({
+              bars={ratedAnxiety.map(({ entry, anxiety }) => ({
                 label: formatWeekday(new Date(entry.createdAt)),
                 short: formatWeekday(new Date(entry.createdAt)).slice(0, 2),
-                value: entry.data.anxiety,
+                value: anxiety,
                 color:
-                  entry.data.anxiety >= 4
+                  anxiety >= 4
                     ? 'var(--c-rose)'
-                    : entry.data.anxiety === 3
+                    : anxiety === 3
                       ? 'var(--c-accent)'
                       : 'var(--c-primary)',
               }))}

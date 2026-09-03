@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { ErrorBoundary } from '../components/ErrorBoundary'
 import { HeartIcon, HomeIcon, ProgramIcon, SettingsIcon } from '../components/Icons'
 import { CrisisSheet } from '../features/crisis/CrisisSheet'
 import { cn } from '../lib/cn'
@@ -101,7 +102,11 @@ export function Layout() {
           className="relative flex-1 animate-[var(--animate-rise)] px-5 pb-28 pt-6 outline-none sm:px-8 lg:px-12 lg:pb-16 lg:pt-10"
         >
           <div className="mx-auto w-full max-w-[46rem]">
-            <Outlet />
+            {/* Nyckeln på <main> gör att boundaryn byts ut vid varje
+                navigering, så ett fel på en sida följer inte med till nästa. */}
+            <ErrorBoundary>
+              <Outlet />
+            </ErrorBoundary>
           </div>
         </main>
 

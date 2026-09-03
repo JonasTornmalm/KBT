@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useStore } from '../../../app/VaultProvider'
-import { Button } from '../../../components/Button'
+import { Button, ButtonLink } from '../../../components/Button'
 import { Card, Muted } from '../../../components/Card'
 import { CheckList } from '../../../components/ChoiceList'
 import { TextArea } from '../../../components/Field'
+import { ErrorState, LoadingState } from '../../../components/PageState'
 import { Slider } from '../../../components/Slider'
 import { StepFlow, type FlowStep } from '../../../components/StepFlow'
 import { useAsync } from '../../../lib/useAsync'
@@ -81,7 +82,7 @@ export function ExposureSession() {
   const store = useStore()
   const navigate = useNavigate()
 
-  const { data: ladder } = useAsync(
+  const { data: ladder, loading, error, reload } = useAsync(
     () => store.get<ExposureLadderData>(ladderId),
     [store, ladderId],
   )
@@ -106,7 +107,29 @@ export function ExposureSession() {
 
   const step = ladder ? sortedSteps(ladder.data).find((item) => item.id === stepId) : undefined
 
-  if (!ladder || !step) return null
+  // Passet ligger utanför Layout och har ingen ram att falla tillbaka på, så
+  // varje utfall måste säga något och erbjuda en väg tillbaka.
+  if (error || loading || !ladder || !step) {
+    return (
+      <div className="mx-auto w-full max-w-[42rem] px-5 py-10 sm:px-6">
+        {error ? (
+          <ErrorState onRetry={reload} />
+        ) : loading ? (
+          <LoadingState />
+        ) : (
+          <ErrorState
+            title="Steget finns inte"
+            body="Trappan eller steget kan ha tagits bort sedan länken skapades."
+          />
+        )}
+        <div className="mt-6">
+          <ButtonLink to={`/verktyg/exponering/${ladderId}`} variant="soft">
+            Till trappan
+          </ButtonLink>
+        </div>
+      </div>
+    )
+  }
 
   const record = () => {
     setReadings((current) => [...current, { at: seconds, sud: currentSud }])

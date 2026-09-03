@@ -43,7 +43,7 @@ export function ChoiceList<T extends string | number>({
             <label
               key={String(choice.value)}
               className={cn(
-                'flex min-h-[3.25rem] cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 transition-colors duration-200',
+                'choice flex min-h-[3.25rem] cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 transition-colors duration-200',
                 selected
                   ? 'border-primary bg-primary-soft text-primary-ink'
                   : 'border-line bg-surface hover:border-line-strong',
@@ -104,7 +104,7 @@ export function CheckList<T extends string>({
             <label
               key={choice.value}
               className={cn(
-                'flex min-h-[3.25rem] cursor-pointer items-start gap-3 rounded-xl border px-4 py-3 transition-colors duration-200',
+                'choice flex min-h-[3.25rem] cursor-pointer items-start gap-3 rounded-xl border px-4 py-3 transition-colors duration-200',
                 selected
                   ? 'border-primary bg-primary-soft text-primary-ink'
                   : 'border-line bg-surface hover:border-line-strong',

@@ -6,6 +6,7 @@ import { Card, Muted } from '../../components/Card'
 import { TextArea } from '../../components/Field'
 import { ArrowRightIcon, PlusIcon, TrashIcon } from '../../components/Icons'
 import { ListField } from '../../components/ListField'
+import { ErrorState, LoadingState } from '../../components/PageState'
 import { Slider } from '../../components/Slider'
 import { StepFlow, type FlowStep } from '../../components/StepFlow'
 import { cn } from '../../lib/cn'
@@ -182,13 +183,40 @@ export function ProblemSolvingDetail() {
   const { id = '' } = useParams()
   const store = useStore()
   const navigate = useNavigate()
-  const { data, reload } = useAsync(() => store.get<ProblemSolvingData>(id), [store, id])
+  const { data, loading, error, reload } = useAsync(
+    () => store.get<ProblemSolvingData>(id),
+    [store, id],
+  )
 
   const [result, setResult] = useState('')
   const [satisfaction, setSatisfaction] = useState(5)
   const [evaluating, setEvaluating] = useState(false)
 
-  if (!data) return null
+  if (error) {
+    return (
+      <ToolPage toolId="problem-solving">
+        <ErrorState onRetry={reload} />
+      </ToolPage>
+    )
+  }
+  if (loading) {
+    return (
+      <ToolPage toolId="problem-solving">
+        <LoadingState />
+      </ToolPage>
+    )
+  }
+  if (!data) {
+    return (
+      <ToolPage toolId="problem-solving">
+        <EmptyState
+          title="Planen finns inte"
+          body="Den kan ha tagits bort."
+          action={<ButtonLink to="/verktyg/problemlosning">Till problemlösningen</ButtonLink>}
+        />
+      </ToolPage>
+    )
+  }
   const plan = data.data
 
   const saveResult = async () => {
@@ -315,8 +343,19 @@ export function ProblemSolvingDetail() {
 
 export function ProblemSolvingPage() {
   const store = useStore()
-  const { data } = useAsync(() => store.byType<ProblemSolvingData>('problemSolving'), [store])
+  const { data, error, reload } = useAsync(
+    () => store.byType<ProblemSolvingData>('problemSolving'),
+    [store],
+  )
   const entries = data ?? []
+
+  if (error) {
+    return (
+      <ToolPage toolId="problem-solving">
+        <ErrorState onRetry={reload} />
+      </ToolPage>
+    )
+  }
 
   return (
     <ToolPage

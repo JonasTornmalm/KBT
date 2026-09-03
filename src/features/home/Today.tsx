@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useStore } from '../../app/VaultProvider'
 import { Backdrop } from '../../components/Backdrop'
 import { Card, Muted } from '../../components/Card'
 import { ArrowRightIcon, CheckIcon } from '../../components/Icons'
+import { ErrorState, LoadingState } from '../../components/PageState'
 import { FIRST_SESSION_SLUG, SESSIONS } from '../../content/program'
 import { MOOD_LEVELS, type CheckinData } from '../../domain/checkin'
 import { computeNextStep } from '../../domain/nextStep'
@@ -36,14 +38,31 @@ function CheckinRow({
   onSaved: () => void
 }) {
   const store = useStore()
+  const [saving, setSaving] = useState(false)
 
   const pick = async (mood: number) => {
-    if (existing) {
-      await store.save<CheckinData>('checkin', 'checkin', { ...existing.data, mood }, existing.day)
-    } else {
-      await store.create<CheckinData>('checkin', { mood, energy: 3, anxiety: 3 })
+    // Skrivningen och omläsningen tar en stund, och under tiden står knapparna
+    // kvar. Utan spärren blir två snabba tryck två incheckningar samma dag.
+    if (saving) return
+
+    setSaving(true)
+    try {
+      if (existing) {
+        await store.save<CheckinData>(
+          existing.id,
+          'checkin',
+          { ...existing.data, mood },
+          existing.day,
+        )
+      } else {
+        // Bara humöret. Energi och ångest lämnas otomma tills någon faktiskt
+        // skattar dem på incheckningssidan.
+        await store.create<CheckinData>('checkin', { mood })
+      }
+      onSaved()
+    } finally {
+      setSaving(false)
     }
-    onSaved()
   }
 
   if (existing) {
@@ -75,7 +94,8 @@ function CheckinRow({
             key={level.value}
             type="button"
             onClick={() => void pick(level.value)}
-            className="group flex flex-1 flex-col items-center gap-1.5 rounded-xl py-1.5 transition-colors hover:bg-surface-2"
+            disabled={saving}
+            className="group flex flex-1 flex-col items-center gap-1.5 rounded-xl py-1.5 transition-colors hover:bg-surface-2 disabled:pointer-events-none"
           >
             <span
               className="grid size-9 place-items-center rounded-full bg-canvas-soft transition-transform duration-300 ease-[var(--ease-calm)] group-hover:scale-110"
@@ -96,11 +116,12 @@ export function Today() {
   const store = useStore()
   const today = toDayKey()
 
-  const { data, reload } = useAsync(async () => {
-    const [checkins, progressEntry, assessments] = await Promise.all([
+  const { data, error, reload } = useAsync(async () => {
+    const [checkins, progressEntry, assessments, activity] = await Promise.all([
       store.byType<CheckinData>('checkin', { from: today, to: today, limit: 1 }),
       store.singleton<ProgramProgress>('programProgress', () => emptyProgress(FIRST_SESSION_SLUG)),
       store.byType<AssessmentRecord>('assessment'),
+      store.latestByType(),
     ])
 
     const lastRelevant = assessments.find(
@@ -111,14 +132,17 @@ export function Today() {
       today: checkins[0],
       progress: progressEntry.data,
       lastAssessmentAt: lastRelevant ? new Date(lastRelevant.createdAt) : null,
+      activity,
     }
   }, [store, today])
 
-  if (!data) return null
+  if (error) return <ErrorState onRetry={reload} />
+  if (!data) return <LoadingState />
 
   const step = computeNextStep({
     progress: data.progress,
     lastAssessmentAt: data.lastAssessmentAt,
+    activity: data.activity,
   })
   const done = completedCount(data.progress)
 

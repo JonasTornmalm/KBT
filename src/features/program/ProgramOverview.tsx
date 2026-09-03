@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useStore } from '../../app/VaultProvider'
 import { Card, Muted } from '../../components/Card'
 import { ArrowRightIcon, CheckIcon, LockIcon } from '../../components/Icons'
+import { ErrorState } from '../../components/PageState'
 import { FIRST_SESSION_SLUG, SESSIONS } from '../../content/program'
 import {
   completedCount,
@@ -16,7 +17,7 @@ import { useAsync } from '../../lib/useAsync'
 
 export function ProgramOverview() {
   const store = useStore()
-  const { data } = useAsync(
+  const { data, error, reload } = useAsync(
     () => store.singleton<ProgramProgress>('programProgress', () => emptyProgress(FIRST_SESSION_SLUG)),
     [store],
   )
@@ -36,6 +37,18 @@ export function ProgramOverview() {
           hemuppgifterna som gör jobbet – sessionerna förbereder dem.
         </Muted>
       </header>
+
+      {/* Sessionstexterna är statiskt innehåll och visas oavsett. Det är bara
+          hur långt man kommit som kan saknas, och då sägs det rakt ut. */}
+      {error ? (
+        <div className="mb-8">
+          <ErrorState
+            title="Din progress gick inte att läsa"
+            body="Sessionerna finns kvar nedan, men appen kan inte visa vad du hunnit med just nu."
+            onRetry={reload}
+          />
+        </div>
+      ) : null}
 
       {progress ? (
         <Card tone="soft" className="mb-8">

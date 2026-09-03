@@ -5,6 +5,7 @@ import { Card, Muted } from '../../components/Card'
 import { BarChart } from '../../components/Chart'
 import { TextArea, TextInput } from '../../components/Field'
 import { MoonIcon, TrashIcon } from '../../components/Icons'
+import { ErrorState } from '../../components/PageState'
 import { Slider } from '../../components/Slider'
 import {
   STIMULUS_CONTROL_RULES,
@@ -36,7 +37,7 @@ export function SleepPage() {
   const [draft, setDraft] = useState<SleepEntryData>(emptyEntry)
   const [saved, setSaved] = useState(false)
 
-  const { data, reload } = useAsync(
+  const { data, error, reload } = useAsync(
     () => store.byType<SleepEntryData>('sleepDiary', { limit: 60 }),
     [store],
   )
@@ -79,6 +80,14 @@ export function SleepPage() {
               : 'var(--c-rose)',
       }
     })
+
+  if (error) {
+    return (
+      <ToolPage toolId="sleep">
+        <ErrorState onRetry={reload} />
+      </ToolPage>
+    )
+  }
 
   return (
     <ToolPage toolId="sleep">

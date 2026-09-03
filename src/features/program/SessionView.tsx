@@ -3,8 +3,10 @@ import { useStore } from '../../app/VaultProvider'
 import { Button } from '../../components/Button'
 import { Card, Muted } from '../../components/Card'
 import { ArrowRightIcon, CheckIcon } from '../../components/Icons'
+import { ErrorState } from '../../components/PageState'
 import { FIRST_SESSION_SLUG, SESSIONS, sessionBySlug } from '../../content/program'
 import { resolveToolPath } from '../../content/toolPaths'
+import { isToolUsedSince } from '../../domain/program/homework'
 import {
   homeworkKey,
   isCompleted,
@@ -23,12 +25,15 @@ export function SessionView() {
   const navigate = useNavigate()
   const session = sessionBySlug(slug)
 
-  const { data, reload } = useAsync(
-    () =>
+  const { data, error, reload } = useAsync(async () => {
+    const [progressEntry, activity] = await Promise.all([
       store.singleton<ProgramProgress>('programProgress', () => emptyProgress(FIRST_SESSION_SLUG)),
-    [store],
-  )
-  const progress = data?.data
+      store.latestByType(),
+    ])
+    return { progress: progressEntry.data, activity }
+  }, [store])
+  const progress = data?.progress
+  const activity = data?.activity ?? {}
 
   if (!session) {
     return (
@@ -49,6 +54,8 @@ export function SessionView() {
     await store.saveSingleton('programProgress', updated)
     reload()
   }
+
+  const completedAt = progress?.completedAt?.[session.slug]
 
   const onToggleHomework = async (index: number) => {
     if (!progress) return
@@ -125,12 +132,27 @@ export function SessionView() {
       <section className="mt-12">
         <h2 className="text-xl font-bold text-ink">Till veckan</h2>
         <Muted className="mt-1">
-          Det är här förändringen sker. Bocka av allteftersom – det behöver inte bli perfekt.
+          Det är här förändringen sker. Uppgifter som hör ihop med ett verktyg bockas av av sig
+          själva när du använt det – resten kryssar du i här.
         </Muted>
+
+        {error ? (
+          <div className="mt-4">
+            <ErrorState
+              title="Dina avbockningar gick inte att läsa"
+              body="Sessionen går att läsa ändå, men appen kan inte visa vad du redan gjort."
+              onRetry={reload}
+            />
+          </div>
+        ) : null}
         <ul className="mt-4 grid gap-2">
           {session.homework.map((item, index) => {
             const key = homeworkKey(session.slug, index)
-            const checked = progress?.homeworkDone.includes(key) ?? false
+            const ticked = progress?.homeworkDone.includes(key) ?? false
+            // Uppgiften kan också vara gjord utan att någon bockat av den:
+            // posten finns i verktyget. Då är kryssrutan inget att trycka på.
+            const registered = isToolUsedSince(item.tool, completedAt, activity)
+            const checked = ticked || registered
             const path = item.tool ? resolveToolPath(item.tool) : undefined
 
             return (
@@ -141,20 +163,28 @@ export function SessionView() {
                     checked ? 'border-primary/30 bg-primary-soft' : 'border-line bg-surface',
                   )}
                 >
-                  <button
-                    type="button"
-                    onClick={() => void onToggleHomework(index)}
-                    aria-pressed={checked}
-                    className={cn(
-                      'mt-0.5 grid size-6 shrink-0 place-items-center rounded-lg border-2 transition-colors',
-                      checked ? 'border-primary bg-primary' : 'border-line-strong hover:border-primary',
-                    )}
-                  >
-                    <span className="sr-only">
-                      {checked ? 'Markera som ogjord' : 'Markera som klar'}: {item.text}
+                  {registered ? (
+                    <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-lg bg-primary">
+                      <CheckIcon className="size-4 text-on-primary" />
                     </span>
-                    {checked ? <CheckIcon className="size-4 text-on-primary" /> : null}
-                  </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => void onToggleHomework(index)}
+                      aria-pressed={checked}
+                      className={cn(
+                        'mt-0.5 grid size-6 shrink-0 place-items-center rounded-lg border-2 transition-colors',
+                        checked
+                          ? 'border-primary bg-primary'
+                          : 'border-line-strong hover:border-primary',
+                      )}
+                    >
+                      <span className="sr-only">
+                        {checked ? 'Markera som ogjord' : 'Markera som klar'}: {item.text}
+                      </span>
+                      {checked ? <CheckIcon className="size-4 text-on-primary" /> : null}
+                    </button>
+                  )}
 
                   <div className="min-w-0 flex-1">
                     <p
@@ -165,6 +195,11 @@ export function SessionView() {
                     >
                       {item.text}
                     </p>
+                    {registered ? (
+                      <p className="mt-1 text-sm text-primary-ink/80">
+                        Registrerad i verktyget – du behövde inte bocka av den.
+                      </p>
+                    ) : null}
                     {path ? (
                       <Link
                         to={path}

@@ -4,6 +4,7 @@ import { Button, ButtonLink } from '../../components/Button'
 import { Card, Muted } from '../../components/Card'
 import { TextArea } from '../../components/Field'
 import { CheckIcon, CloudIcon, PlusIcon, TrashIcon } from '../../components/Icons'
+import { ErrorState } from '../../components/PageState'
 import { Sheet } from '../../components/Sheet'
 import { Slider } from '../../components/Slider'
 import { cn } from '../../lib/cn'
@@ -212,7 +213,10 @@ export function WorryPage() {
   const [timerOpen, setTimerOpen] = useState(false)
   const [followUp, setFollowUp] = useState<Entry<WorryData> | null>(null)
 
-  const { data, reload } = useAsync(() => store.byType<WorryData>('worry', { limit: 200 }), [store])
+  const { data, error, reload } = useAsync(
+    () => store.byType<WorryData>('worry', { limit: 200 }),
+    [store],
+  )
   const worries = data ?? []
 
   const unsorted = worries.filter((worry) => worry.data.controllable === null)
@@ -259,6 +263,14 @@ export function WorryPage() {
   const remove = async (id: string) => {
     await store.remove(id)
     reload()
+  }
+
+  if (error) {
+    return (
+      <ToolPage toolId="worry">
+        <ErrorState onRetry={reload} />
+      </ToolPage>
+    )
   }
 
   return (

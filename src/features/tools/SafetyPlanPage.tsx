@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Card, Muted } from '../../components/Card'
 import { PlusIcon, TrashIcon } from '../../components/Icons'
 import { ListField } from '../../components/ListField'
+import { ErrorState, LoadingState } from '../../components/PageState'
 import { CRISIS_RESOURCES } from '../../content/crisis'
 import { saveStatusLabel, useAutoSaveSingleton } from '../../lib/useAutoSave'
 import { ToolPage } from './ToolPage'
@@ -99,7 +100,7 @@ function ContactList({
           onChange={(event) => setName(event.target.value)}
           placeholder="Namn"
           aria-label={`${label} – namn`}
-          className="min-h-[3rem] min-w-0 flex-[2] rounded-xl border border-line bg-surface px-4 text-ink placeholder:text-ink-faint focus:border-primary focus:outline-none"
+          className="min-h-[3rem] min-w-0 flex-[2] rounded-xl border border-line bg-surface px-4 text-ink placeholder:text-ink-faint focus:border-primary"
         />
         <input
           value={phone}
@@ -113,7 +114,7 @@ function ContactList({
           placeholder="Telefon"
           inputMode="tel"
           aria-label={`${label} – telefon`}
-          className="min-h-[3rem] min-w-0 flex-1 rounded-xl border border-line bg-surface px-4 text-ink placeholder:text-ink-faint focus:border-primary focus:outline-none"
+          className="min-h-[3rem] min-w-0 flex-1 rounded-xl border border-line bg-surface px-4 text-ink placeholder:text-ink-faint focus:border-primary"
         />
         <button
           type="button"
@@ -139,12 +140,25 @@ function ContactList({
  * det är som svårast att välja.
  */
 export function SafetyPlanPage() {
-  const { value, update, status, loading } = useAutoSaveSingleton<SafetyPlanData>(
+  const { value, update, status, error, loading } = useAutoSaveSingleton<SafetyPlanData>(
     'safetyPlan',
     emptyPlan,
   )
 
-  if (loading || !value) return null
+  if (error) {
+    return (
+      <ToolPage toolId="safety-plan">
+        <ErrorState />
+      </ToolPage>
+    )
+  }
+  if (loading || !value) {
+    return (
+      <ToolPage toolId="safety-plan">
+        <LoadingState />
+      </ToolPage>
+    )
+  }
 
   const steps = [
     {

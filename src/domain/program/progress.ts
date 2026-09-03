@@ -1,4 +1,5 @@
 import { SESSIONS } from '../../content/program'
+import { isToolUsedSince, type ToolActivity } from './homework'
 import type { ProgramProgress, Session } from './types'
 
 /**
@@ -70,14 +71,44 @@ export function toggleHomework(progress: ProgramProgress, key: string): ProgramP
   }
 }
 
-/** Hemuppgifter som ännu inte är avbockade för en session. */
+/**
+ * Hemuppgifter som ännu inte är avbockade för en session.
+ *
+ * En uppgift räknas som gjord antingen för att kryssrutan är i, eller för att
+ * verktyget den pekar på faktiskt använts sedan sessionen bockades av. Skicka
+ * med `activity` för det senare; utan den är bara kryssrutan som gäller.
+ */
 export function pendingHomework(
   session: Session,
   progress: ProgramProgress,
+  activity: ToolActivity = {},
 ): Array<{ index: number; text: string; tool?: string }> {
+  const since = progress.completedAt?.[session.slug]
+
   return session.homework
     .map((item, index) => ({ index, text: item.text, tool: item.tool }))
-    .filter((item) => !progress.homeworkDone.includes(homeworkKey(session.slug, item.index)))
+    .filter(
+      (item) =>
+        !progress.homeworkDone.includes(homeworkKey(session.slug, item.index)) &&
+        !isToolUsedSince(item.tool, since, activity),
+    )
+}
+
+/** Sant när uppgiften bockats av av användaren själv eller av verktygsspåret. */
+export function isHomeworkDone(
+  session: Session,
+  index: number,
+  progress: ProgramProgress,
+  activity: ToolActivity = {},
+): boolean {
+  if (progress.homeworkDone.includes(homeworkKey(session.slug, index))) return true
+
+  const done = isToolUsedSince(
+    session.homework[index]?.tool,
+    progress.completedAt?.[session.slug],
+    activity,
+  )
+  return done
 }
 
 /** Andel avbockade hemuppgifter för en session. */

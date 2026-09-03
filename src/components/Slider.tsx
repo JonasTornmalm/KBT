@@ -1,8 +1,7 @@
 import { useId } from 'react'
 import { cn } from '../lib/cn'
 
-const TRACK =
-  'h-2 w-full cursor-pointer appearance-none rounded-full bg-transparent focus:outline-none'
+const TRACK = 'h-2 w-full cursor-pointer appearance-none rounded-full bg-transparent'
 const THUMB =
   '[&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:size-7 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-surface [&::-webkit-slider-thumb]:border-4 [&::-webkit-slider-thumb]:border-[var(--slider-tone)] [&::-webkit-slider-thumb]:shadow-soft [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:duration-150 [&:active::-webkit-slider-thumb]:scale-110 [&::-moz-range-thumb]:size-7 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-surface [&::-moz-range-thumb]:border-4 [&::-moz-range-thumb]:border-[var(--slider-tone)] [&::-moz-range-thumb]:border-solid'
 

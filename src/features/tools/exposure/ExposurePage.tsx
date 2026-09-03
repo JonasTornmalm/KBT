@@ -6,6 +6,7 @@ import { Card, Muted } from '../../../components/Card'
 import { TextInput } from '../../../components/Field'
 import { ArrowRightIcon, PlusIcon, TrashIcon } from '../../../components/Icons'
 import { ListField } from '../../../components/ListField'
+import { ErrorState, LoadingState } from '../../../components/PageState'
 import { Slider } from '../../../components/Slider'
 import { SAFETY_BEHAVIOURS } from '../../../content/library'
 import { cn } from '../../../lib/cn'
@@ -27,7 +28,7 @@ export function ExposurePage() {
   const navigate = useNavigate()
   const [theme, setTheme] = useState('')
 
-  const { data, reload } = useAsync(async () => {
+  const { data, error, reload } = useAsync(async () => {
     const [ladders, sessions] = await Promise.all([
       store.byType<ExposureLadderData>('exposureLadder', { order: 'asc' }),
       store.byType<ExposureSessionData>('exposureSession'),
@@ -48,6 +49,14 @@ export function ExposurePage() {
   }
 
   const ladders = data?.ladders ?? []
+
+  if (error) {
+    return (
+      <ToolPage toolId="exposure">
+        <ErrorState onRetry={reload} />
+      </ToolPage>
+    )
+  }
 
   return (
     <ToolPage toolId="exposure">
@@ -117,7 +126,7 @@ export function ExposureLadderPage() {
   const [draft, setDraft] = useState('')
   const [expected, setExpected] = useState(50)
 
-  const { data, reload } = useAsync(async () => {
+  const { data, loading, error, reload } = useAsync(async () => {
     const [ladder, sessions] = await Promise.all([
       store.get<ExposureLadderData>(id),
       store.byType<ExposureSessionData>('exposureSession'),
@@ -125,7 +134,31 @@ export function ExposureLadderPage() {
     return { ladder, sessions: sessions.filter((session) => session.data.ladderId === id) }
   }, [store, id])
 
-  if (!data?.ladder) return null
+  if (error) {
+    return (
+      <ToolPage toolId="exposure">
+        <ErrorState onRetry={reload} />
+      </ToolPage>
+    )
+  }
+  if (loading) {
+    return (
+      <ToolPage toolId="exposure">
+        <LoadingState />
+      </ToolPage>
+    )
+  }
+  if (!data?.ladder) {
+    return (
+      <ToolPage toolId="exposure">
+        <EmptyState
+          title="Trappan finns inte"
+          body="Den kan ha tagits bort."
+          action={<ButtonLink to="/verktyg/exponering">Till exponeringen</ButtonLink>}
+        />
+      </ToolPage>
+    )
+  }
   const ladder = data.ladder
   const steps = sortedSteps(ladder.data)
 

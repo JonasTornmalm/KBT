@@ -3,6 +3,7 @@ import { useStore } from '../../../app/VaultProvider'
 import { Button, ButtonLink } from '../../../components/Button'
 import { Card, Muted } from '../../../components/Card'
 import { ArrowRightIcon, PlusIcon, TrashIcon } from '../../../components/Icons'
+import { ErrorState, LoadingState } from '../../../components/PageState'
 import { DISTORTIONS } from '../../../content/distortions'
 import { EMOTIONS } from '../../../content/library'
 import { formatRelativeDay } from '../../../lib/date'
@@ -64,9 +65,25 @@ export function ThoughtRecordDetail() {
   const { id = '' } = useParams()
   const store = useStore()
   const navigate = useNavigate()
-  const { data, loading } = useAsync(() => store.get<ThoughtRecordData>(id), [store, id])
+  const { data, loading, error, reload } = useAsync(
+    () => store.get<ThoughtRecordData>(id),
+    [store, id],
+  )
 
-  if (loading) return null
+  if (error) {
+    return (
+      <ToolPage toolId="thought-record">
+        <ErrorState onRetry={reload} />
+      </ToolPage>
+    )
+  }
+  if (loading) {
+    return (
+      <ToolPage toolId="thought-record">
+        <LoadingState />
+      </ToolPage>
+    )
+  }
   if (!data) {
     return (
       <ToolPage toolId="thought-record">
@@ -170,7 +187,10 @@ export function ThoughtRecordDetail() {
 
 export function ThoughtRecordPage() {
   const store = useStore()
-  const { data } = useAsync(() => store.byType<ThoughtRecordData>('thoughtRecord'), [store])
+  const { data, error, reload } = useAsync(
+    () => store.byType<ThoughtRecordData>('thoughtRecord'),
+    [store],
+  )
   const entries = data ?? []
 
   const averageShift =
@@ -179,6 +199,14 @@ export function ThoughtRecordPage() {
           entries.reduce((sum, entry) => sum + thoughtShift(entry.data).belief, 0) / entries.length,
         )
       : 0
+
+  if (error) {
+    return (
+      <ToolPage toolId="thought-record">
+        <ErrorState onRetry={reload} />
+      </ToolPage>
+    )
+  }
 
   return (
     <ToolPage

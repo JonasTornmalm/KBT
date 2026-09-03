@@ -13,15 +13,21 @@ export type SaveStatus = 'idle' | 'saving' | 'saved'
 export function useAutoSaveSingleton<T>(type: SingletonType, fallback: () => T) {
   const store = useStore()
   const [value, setValue] = useState<T | null>(null)
+  const [error, setError] = useState<Error | null>(null)
   const [status, setStatus] = useState<SaveStatus>('idle')
   const timer = useRef<number | undefined>(undefined)
   const clearSaved = useRef<number | undefined>(undefined)
 
   useEffect(() => {
     let cancelled = false
-    void store.singleton<T>(type, fallback).then((entry) => {
-      if (!cancelled) setValue(entry.data)
-    })
+    store
+      .singleton<T>(type, fallback)
+      .then((entry) => {
+        if (!cancelled) setValue(entry.data)
+      })
+      .catch((caught: Error) => {
+        if (!cancelled) setError(caught)
+      })
     return () => {
       cancelled = true
     }
@@ -60,7 +66,7 @@ export function useAutoSaveSingleton<T>(type: SingletonType, fallback: () => T) 
     [store, type],
   )
 
-  return { value, update, status, loading: value === null }
+  return { value, update, status, error, loading: value === null && error === null }
 }
 
 export function saveStatusLabel(status: SaveStatus): string {

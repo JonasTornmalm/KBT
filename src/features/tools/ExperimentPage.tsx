@@ -5,6 +5,7 @@ import { Button, ButtonLink } from '../../components/Button'
 import { Card, Muted } from '../../components/Card'
 import { TextArea } from '../../components/Field'
 import { ArrowRightIcon, PlusIcon, TrashIcon } from '../../components/Icons'
+import { ErrorState, LoadingState } from '../../components/PageState'
 import { Slider } from '../../components/Slider'
 import { StepFlow, type FlowStep } from '../../components/StepFlow'
 import { formatRelativeDay } from '../../lib/date'
@@ -122,14 +123,41 @@ export function ExperimentDetail() {
   const { id = '' } = useParams()
   const store = useStore()
   const navigate = useNavigate()
-  const { data, reload } = useAsync(() => store.get<ExperimentData>(id), [store, id])
+  const { data, loading, error, reload } = useAsync(
+    () => store.get<ExperimentData>(id),
+    [store, id],
+  )
 
   const [outcome, setOutcome] = useState('')
   const [conclusion, setConclusion] = useState('')
   const [likelihoodAfter, setLikelihoodAfter] = useState(50)
   const [recording, setRecording] = useState(false)
 
-  if (!data) return null
+  if (error) {
+    return (
+      <ToolPage toolId="experiment">
+        <ErrorState onRetry={reload} />
+      </ToolPage>
+    )
+  }
+  if (loading) {
+    return (
+      <ToolPage toolId="experiment">
+        <LoadingState />
+      </ToolPage>
+    )
+  }
+  if (!data) {
+    return (
+      <ToolPage toolId="experiment">
+        <EmptyState
+          title="Experimentet finns inte"
+          body="Det kan ha tagits bort."
+          action={<ButtonLink to="/verktyg/beteendeexperiment">Till experimenten</ButtonLink>}
+        />
+      </ToolPage>
+    )
+  }
   const experiment = data.data
   const complete = experiment.outcome !== undefined
 
@@ -265,7 +293,7 @@ export function ExperimentDetail() {
 
 export function ExperimentPage() {
   const store = useStore()
-  const { data } = useAsync(() => store.byType<ExperimentData>('experiment'), [store])
+  const { data, error, reload } = useAsync(() => store.byType<ExperimentData>('experiment'), [store])
   const entries = data ?? []
   const completed = entries.filter((entry) => entry.data.likelihoodAfter !== undefined)
 
@@ -278,6 +306,14 @@ export function ExperimentPage() {
           ) / completed.length,
         )
       : 0
+
+  if (error) {
+    return (
+      <ToolPage toolId="experiment">
+        <ErrorState onRetry={reload} />
+      </ToolPage>
+    )
+  }
 
   return (
     <ToolPage

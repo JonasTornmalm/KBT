@@ -40,6 +40,29 @@ describe('nästa steg', () => {
     expect(step.why.length).toBeGreaterThan(20)
   })
 
+  it('slutar föreslå hemuppgiften när verktyget faktiskt använts', () => {
+    const progress = completeSession(fresh(), 1, 1)
+    const usedAfterSession = new Date(NOW.getTime() - 3_600_000).toISOString()
+
+    // Ingen har bockat av något. Att posterna finns är beviset — annars säger
+    // startsidan "gör uppgiften" också till den som just gjort den.
+    const before = computeNextStep({ progress, lastAssessmentAt: null, now: NOW })
+    const after = computeNextStep({
+      progress,
+      lastAssessmentAt: null,
+      now: NOW,
+      activity: {
+        checkin: usedAfterSession,
+        assessment: usedAfterSession,
+        thoughtRecord: usedAfterSession,
+      },
+    })
+
+    expect(before.kind).toBe('homework')
+    expect(after.kind).toBe('nextSession')
+    expect(after.to).toBe(`/program/${SESSIONS[1]!.slug}`)
+  })
+
   it('pekar på hemuppgiften direkt efter en avklarad session', () => {
     const progress = completeSession(fresh(), 1)
     const step = computeNextStep({ progress, lastAssessmentAt: null, now: NOW })

@@ -3,6 +3,7 @@ import { useStore } from '../../app/VaultProvider'
 import { Card, Muted } from '../../components/Card'
 import { Sparkline } from '../../components/Chart'
 import { ArrowRightIcon } from '../../components/Icons'
+import { ErrorState } from '../../components/PageState'
 import { SCALES, SCALE_ORDER } from '../../domain/assessments/scales'
 import { scoreAssessment, type AssessmentRecord } from '../../domain/assessments/scoring'
 import { cn } from '../../lib/cn'
@@ -18,7 +19,7 @@ const TONE_BADGE = {
 
 export function AssessmentsIndex() {
   const store = useStore()
-  const { data } = useAsync(
+  const { data, error, reload } = useAsync(
     () => store.byType<AssessmentRecord>('assessment', { order: 'asc' }),
     [store],
   )
@@ -32,6 +33,18 @@ export function AssessmentsIndex() {
           – oftare än så säger de mest brus.
         </Muted>
       </header>
+
+      {/* Historiken, inte skalorna, är det som kan saknas. Att bara visa "inte
+          gjord än" hade varit ett svar på en fråga vi inte kunde besvara. */}
+      {error ? (
+        <div className="mb-6">
+          <ErrorState
+            title="Dina tidigare skattningar gick inte att läsa"
+            body="De ligger kvar – appen kunde bara inte öppna dem just nu. Du kan göra en ny skattning ändå."
+            onRetry={reload}
+          />
+        </div>
+      ) : null}
 
       <div className="grid gap-4">
         {SCALE_ORDER.map((key) => {

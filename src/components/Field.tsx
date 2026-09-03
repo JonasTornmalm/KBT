@@ -20,8 +20,10 @@ export function FieldLabel({
   )
 }
 
+// Ingen `outline-none` här. Kantfärgen är en trevlig markering men inte en
+// fokusindikator — den globala ringen i theme.css ska få göra sitt jobb.
 const CONTROL =
-  'w-full rounded-xl border border-line bg-surface px-4 py-3 text-ink placeholder:text-ink-faint transition-colors duration-200 focus:border-primary focus:outline-none focus-visible:outline-none'
+  'w-full rounded-xl border border-line bg-surface px-4 py-3 text-ink placeholder:text-ink-faint transition-colors duration-200 focus:border-primary'
 
 export function TextArea({
   label,

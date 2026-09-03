@@ -1,5 +1,6 @@
 import { SESSIONS, sessionBySlug } from '../content/program'
 import { resolveToolPath } from '../content/toolPaths'
+import type { ToolActivity } from './program/homework'
 import { isProgramFinished, nextSession, pendingHomework } from './program/progress'
 import type { ProgramProgress } from './program/types'
 
@@ -42,6 +43,11 @@ export interface NextStepInput {
   progress: ProgramProgress
   /** Senaste PHQ-9- eller GAD-7-skattningen. */
   lastAssessmentAt: Date | null
+  /**
+   * När varje verktyg senast användes. Gör att en hemuppgift som redan är
+   * gjord i verktyget inte föreslås igen, utan att någon behövt bocka av den.
+   */
+  activity?: ToolActivity
   now?: Date
 }
 
@@ -58,6 +64,7 @@ function daysSince(from: Date, now: Date): number {
 export function computeNextStep({
   progress,
   lastAssessmentAt,
+  activity = {},
   now = new Date(),
 }: NextStepInput): NextStep {
   const session = nextSession(progress)
@@ -116,7 +123,7 @@ export function computeNextStep({
   }
 
   // 4. Förra veckans session är klar. Är hemuppgiften gjord?
-  const pending = pendingHomework(previous, progress)
+  const pending = pendingHomework(previous, progress, activity)
   const completedAt = progress.completedAt?.[previous.slug]
   const daysSinceSession = completedAt ? daysSince(new Date(completedAt), now) : HOMEWORK_GRACE_DAYS
 

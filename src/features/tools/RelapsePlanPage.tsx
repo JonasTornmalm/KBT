@@ -1,6 +1,7 @@
 import { Card, Muted } from '../../components/Card'
 import { TextArea } from '../../components/Field'
 import { ListField } from '../../components/ListField'
+import { ErrorState, LoadingState } from '../../components/PageState'
 import { saveStatusLabel, useAutoSaveSingleton } from '../../lib/useAutoSave'
 import { ToolPage } from './ToolPage'
 
@@ -30,12 +31,25 @@ function emptyPlan(): RelapsePlanData {
  * mer pessimistisk än den som skriver — det är den personen planen ska nå.
  */
 export function RelapsePlanPage() {
-  const { value, update, status, loading } = useAutoSaveSingleton<RelapsePlanData>(
+  const { value, update, status, error, loading } = useAutoSaveSingleton<RelapsePlanData>(
     'relapsePlan',
     emptyPlan,
   )
 
-  if (loading || !value) return null
+  if (error) {
+    return (
+      <ToolPage toolId="relapse-plan">
+        <ErrorState />
+      </ToolPage>
+    )
+  }
+  if (loading || !value) {
+    return (
+      <ToolPage toolId="relapse-plan">
+        <LoadingState />
+      </ToolPage>
+    )
+  }
 
   const sections = [
     {

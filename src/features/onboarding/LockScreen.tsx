@@ -61,7 +61,7 @@ export function LockScreen() {
             onChange={(e) => setPassphrase(e.target.value)}
             aria-invalid={error ? true : undefined}
             aria-describedby={error ? 'lock-error' : hint ? 'lock-hint' : undefined}
-            className="w-full rounded-xl border border-line bg-surface px-4 py-3.5 text-center text-lg tracking-wider text-ink transition-colors focus:border-primary focus:outline-none"
+            className="w-full rounded-xl border border-line bg-surface px-4 py-3.5 text-center text-lg tracking-wider text-ink transition-colors focus:border-primary"
             placeholder="••••••••"
           />
 

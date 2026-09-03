@@ -7,10 +7,14 @@
 export interface CheckinData {
   /** 1 = mycket tungt, 5 = riktigt bra. */
   mood: number
-  /** 1 = helt tom, 5 = full av energi. */
-  energy: number
-  /** 1 = lugn, 5 = mycket ångest. Vänd skala mot de andra, med flit. */
-  anxiety: number
+  /**
+   * 1 = helt tom, 5 = full av energi. Odefinierad när dagen bara snabbcheckats
+   * in från startsidan — ett ifyllt standardvärde hade blivit en mätning ingen
+   * gjort, och graferna hämtar sitt förtroende från att det aldrig händer.
+   */
+  energy?: number
+  /** 1 = lugn, 5 = mycket ångest. Vänd skala mot de andra, med flit. Se energy. */
+  anxiety?: number
   note?: string
 }
 

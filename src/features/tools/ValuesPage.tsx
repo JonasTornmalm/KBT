@@ -5,6 +5,7 @@ import { Card, Muted } from '../../components/Card'
 import { TextArea, TextInput } from '../../components/Field'
 import { CheckIcon, PlusIcon, TrashIcon } from '../../components/Icons'
 import { ListField } from '../../components/ListField'
+import { ErrorState, LoadingState } from '../../components/PageState'
 import { Slider } from '../../components/Slider'
 import { VALUE_DOMAINS } from '../../content/library'
 import { cn } from '../../lib/cn'
@@ -139,8 +140,14 @@ function GoalCard({
 
 export function ValuesPage() {
   const store = useStore()
-  const { value, update, status, loading } = useAutoSaveSingleton<ValuesData>('values', emptyValues)
-  const { data: goals, reload } = useAsync(() => store.byType<GoalData>('goal'), [store])
+  const { value, update, status, error, loading } = useAutoSaveSingleton<ValuesData>(
+    'values',
+    emptyValues,
+  )
+  const { data: goals, error: goalsError, reload } = useAsync(
+    () => store.byType<GoalData>('goal'),
+    [store],
+  )
 
   const [open, setOpen] = useState<string | null>(null)
   const [adding, setAdding] = useState(false)
@@ -152,7 +159,20 @@ export function ValuesPage() {
     achieved: false,
   })
 
-  if (loading || !value) return null
+  if (error || goalsError) {
+    return (
+      <ToolPage toolId="values">
+        <ErrorState onRetry={reload} />
+      </ToolPage>
+    )
+  }
+  if (loading || !value) {
+    return (
+      <ToolPage toolId="values">
+        <LoadingState />
+      </ToolPage>
+    )
+  }
 
   const ranked = [...VALUE_DOMAINS].sort((a, b) => gap(value, b.id) - gap(value, a.id))
   const biggest = ranked.filter((domain) => gap(value, domain.id) >= 3)
